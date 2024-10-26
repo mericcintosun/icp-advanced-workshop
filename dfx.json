@@ -1,15 +1,15 @@
 {
   "canisters": {
     "shopping_backend": {
-      "main": "src/backend/main.mo",
+      "main": "src/motoko_project_backend/main.mo",
       "type": "motoko"
     },
     "shopping_frontend": {
       "dependencies": ["shopping_backend"],
       "frontend": {
-        "entrypoint": "src/frontend/assets/index.html"
+        "entrypoint": "src/motoko_project_frontend/index.html"
       },
-      "source": ["src/frontend/assets"],
+      "source": ["src/motoko_project_frontend"],
       "type": "assets"
     }
   },
