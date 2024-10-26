@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ICP Shopping App</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .product-form {
+        margin-bottom: 20px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .product-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+      }
+      .product-card {
+        border: 1px solid #ccc;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .out-of-stock {
+        color: red;
+      }
+      .in-stock {
+        color: green;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ICP Shopping App</h1>
+
+    <div class="product-form">
+      <h2>Add New Product</h2>
+      <form id="addProductForm">
+        <div>
+          <label for="name">Name:</label>
+          <input type="text" id="name" required />
+        </div>
+        <div>
+          <label for="price">Price:</label>
+          <input type="number" id="price" required />
+        </div>
+        <div>
+          <label for="description">Description:</label>
+          <textarea id="description" required></textarea>
+        </div>
+        <button type="submit">Add Product</button>
+      </form>
+    </div>
+
+    <h2>Products</h2>
+    <div id="productList" class="product-list"></div>
+
+    <script>
+      let backend;
+
+      async function init() {
+        // Initialize connection with the backend canister
+        backend = window.ic.shopping_backend;
+        await loadProducts();
+      }
+
+      async function loadProducts() {
+        try {
+          const products = await backend.getAllProducts();
+          displayProducts(products);
+        } catch (error) {
+          console.error("Error loading products:", error);
+        }
+      }
+
+      function displayProducts(products) {
+        const productList = document.getElementById("productList");
+        productList.innerHTML = "";
+
+        products.forEach((product) => {
+          const productCard = document.createElement("div");
+          productCard.className = "product-card";
+          productCard.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p>${product.description}</p>
+                    <p>Price: ${product.price} tokens</p>
+                    <p class="${product.inStock ? "in-stock" : "out-of-stock"}">
+                        ${product.inStock ? "In Stock" : "Out of Stock"}
+                    </p>
+                    <button onclick="toggleStock(${
+                      product.id
+                    }, ${!product.inStock})">
+                        ${
+                          product.inStock
+                            ? "Mark Out of Stock"
+                            : "Mark In Stock"
+                        }
+                    </button>
+                `;
+          productList.appendChild(productCard);
+        });
+      }
+
+      async function toggleStock(id, newStatus) {
+        try {
+          await backend.updateStockStatus(id, newStatus);
+          await loadProducts();
+        } catch (error) {
+          console.error("Error updating stock status:", error);
+        }
+      }
+
+      document
+        .getElementById("addProductForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const name = document.getElementById("name").value;
+          const price = parseInt(document.getElementById("price").value);
+          const description = document.getElementById("description").value;
+          try {
+            await backend.addProduct(name, price, description);
+            e.target.reset();
+            await loadProducts();
+          } catch (error) {
+            console.error("Error adding product:", error);
+          }
+        });
+      init();
+    </script>
+  </body>
+</html>
